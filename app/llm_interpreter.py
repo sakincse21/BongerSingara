@@ -116,7 +116,8 @@ Note: "Do not discharge the battery from 11 PM to 1 AM."
 
 USER_PROMPT_TEMPLATE = """\
 Interpret the following operator notes for a 24-hour campus energy schedule.
-Return a JSON object with an "interpretations" array containing exactly {count} entries (one per note, in order).
+{battery_info}Return a JSON object with an "interpretations" array containing exactly {count} entries (one per note, in order).
+If a minimum battery reserve is specified as a percentage (e.g. '50%'), calculate minimum_energy_kwh = (percentage / 100) * battery_capacity.
 
 Operator Notes:
 {notes}
@@ -138,7 +139,10 @@ Return JSON:
 # ──────────────────────── Public Interface ──────────────────────────────
 
 
-def interpret_notes(operator_notes: list[str]) -> list[dict[str, Any]]:
+def interpret_notes(
+    operator_notes: list[str],
+    battery_capacity: float | None = None,
+) -> list[dict[str, Any]]:
     """
     Call the LLM to interpret operator notes into structured directives.
 
@@ -148,9 +152,15 @@ def interpret_notes(operator_notes: list[str]) -> list[dict[str, Any]]:
     model = _get_model()
 
     notes_text = "\n".join(f'{i}: "{note}"' for i, note in enumerate(operator_notes))
+    battery_info = (
+        f"Campus Battery Capacity: {battery_capacity} kWh\n"
+        if battery_capacity is not None
+        else ""
+    )
     user_prompt = USER_PROMPT_TEMPLATE.format(
         count=len(operator_notes),
         notes=notes_text,
+        battery_info=battery_info,
     )
 
     last_error: Exception | None = None
@@ -183,7 +193,7 @@ def interpret_notes(operator_notes: list[str]) -> list[dict[str, Any]]:
 
 def _get_model() -> genai.GenerativeModel:
     """Configure and return a Gemini GenerativeModel instance."""
-    genai.configure(api_key=GEMINI_API_KEY)
+    genai.configure(api_key=GEMINI_API_KEY, transport="rest")
     return genai.GenerativeModel(
         model_name=LLM_MODEL,
         generation_config={

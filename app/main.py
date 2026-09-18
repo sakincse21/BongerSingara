@@ -86,7 +86,10 @@ def optimize_energy(request: OptimizeRequest) -> OptimizeResponse:
 
     try:
         # ── Step 1: LLM Interpretation ───────────────────────────────────
-        raw_interpretations = interpret_notes(request.operator_notes)
+        raw_interpretations = interpret_notes(
+            request.operator_notes,
+            battery_capacity=request.battery.capacity_kwh,
+        )
         logger.info("LLM returned %d raw interpretations", len(raw_interpretations))
 
         # ── Step 2: Guardrail Validation ─────────────────────────────────

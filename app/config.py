@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 load_dotenv()  # reads .env if present
 
 GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-LLM_MODEL: str = os.getenv("LLM_MODEL", "gemini-2.0-flash")
+LLM_MODEL: str = os.getenv("LLM_MODEL", "gemini-3.5-flash")
 HOST: str = os.getenv("HOST", "0.0.0.0")
 PORT: int = int(os.getenv("PORT", "8000"))
 LLM_MAX_RETRIES: int = int(os.getenv("LLM_MAX_RETRIES", "2"))
