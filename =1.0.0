@@ -1,0 +1,46 @@
+Collecting google-genai
+  Downloading google_genai-2.24.0-py3-none-any.whl.metadata (56 kB)
+Requirement already satisfied: anyio<5.0.0,>=4.8.0 in ./venv/lib64/python3.14/site-packages (from google-genai) (4.15.1)
+Requirement already satisfied: google-auth<3.0.0,>=2.56.0 in ./venv/lib64/python3.14/site-packages (from google-auth[requests]<3.0.0,>=2.56.0->google-genai) (2.58.0)
+Requirement already satisfied: httpx<1.0.0,>=0.28.1 in ./venv/lib64/python3.14/site-packages (from google-genai) (0.28.1)
+Requirement already satisfied: pydantic<3.0.0,>=2.12.5 in ./venv/lib64/python3.14/site-packages (from google-genai) (2.13.5)
+Requirement already satisfied: requests<3.0.0,>=2.28.1 in ./venv/lib64/python3.14/site-packages (from google-genai) (2.34.2)
+Collecting tenacity<9.2.0,>=8.2.3 (from google-genai)
+  Downloading tenacity-9.1.4-py3-none-any.whl.metadata (1.2 kB)
+Collecting websockets<17.0,>=13.0.0 (from google-genai)
+  Using cached websockets-16.1.1-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.8 kB)
+Requirement already satisfied: typing-extensions<5.0.0,>=4.14.0 in ./venv/lib64/python3.14/site-packages (from google-genai) (4.16.0)
+Collecting distro<2,>=1.7.0 (from google-genai)
+  Using cached distro-1.9.0-py3-none-any.whl.metadata (6.8 kB)
+Collecting sniffio (from google-genai)
+  Using cached sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+Requirement already satisfied: idna>=2.8 in ./venv/lib64/python3.14/site-packages (from anyio<5.0.0,>=4.8.0->google-genai) (3.20)
+Requirement already satisfied: pyasn1-modules>=0.2.1 in ./venv/lib64/python3.14/site-packages (from google-auth<3.0.0,>=2.56.0->google-auth[requests]<3.0.0,>=2.56.0->google-genai) (0.4.2)
+Requirement already satisfied: cryptography>=41.0.5 in ./venv/lib64/python3.14/site-packages (from google-auth<3.0.0,>=2.56.0->google-auth[requests]<3.0.0,>=2.56.0->google-genai) (50.0.1)
+Requirement already satisfied: certifi in ./venv/lib64/python3.14/site-packages (from httpx<1.0.0,>=0.28.1->google-genai) (2026.7.22)
+Requirement already satisfied: httpcore==1.* in ./venv/lib64/python3.14/site-packages (from httpx<1.0.0,>=0.28.1->google-genai) (1.0.9)
+Requirement already satisfied: h11>=0.16 in ./venv/lib64/python3.14/site-packages (from httpcore==1.*->httpx<1.0.0,>=0.28.1->google-genai) (0.16.0)
+Requirement already satisfied: annotated-types>=0.6.0 in ./venv/lib64/python3.14/site-packages (from pydantic<3.0.0,>=2.12.5->google-genai) (0.8.0)
+Requirement already satisfied: pydantic-core==2.46.5 in ./venv/lib64/python3.14/site-packages (from pydantic<3.0.0,>=2.12.5->google-genai) (2.46.5)
+Requirement already satisfied: typing-inspection>=0.4.2 in ./venv/lib64/python3.14/site-packages (from pydantic<3.0.0,>=2.12.5->google-genai) (0.4.4)
+Requirement already satisfied: charset_normalizer<4,>=2 in ./venv/lib64/python3.14/site-packages (from requests<3.0.0,>=2.28.1->google-genai) (3.5.1)
+Requirement already satisfied: urllib3<3,>=1.26 in ./venv/lib64/python3.14/site-packages (from requests<3.0.0,>=2.28.1->google-genai) (2.8.0)
+Requirement already satisfied: cffi>=2.0.0 in ./venv/lib64/python3.14/site-packages (from cryptography>=41.0.5->google-auth<3.0.0,>=2.56.0->google-auth[requests]<3.0.0,>=2.56.0->google-genai) (2.1.1)
+Requirement already satisfied: pycparser in ./venv/lib64/python3.14/site-packages (from cffi>=2.0.0->cryptography>=41.0.5->google-auth<3.0.0,>=2.56.0->google-auth[requests]<3.0.0,>=2.56.0->google-genai) (3.0)
+Requirement already satisfied: pyasn1<0.7.0,>=0.6.1 in ./venv/lib64/python3.14/site-packages (from pyasn1-modules>=0.2.1->google-auth<3.0.0,>=2.56.0->google-auth[requests]<3.0.0,>=2.56.0->google-genai) (0.6.4)
+Downloading google_genai-2.24.0-py3-none-any.whl (1.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.1/1.1 MB 682.7 kB/s  0:00:01
+Using cached distro-1.9.0-py3-none-any.whl (20 kB)
+Downloading tenacity-9.1.4-py3-none-any.whl (28 kB)
+Using cached websockets-16.1.1-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (187 kB)
+Using cached sniffio-1.3.1-py3-none-any.whl (10 kB)
+Installing collected packages: websockets, tenacity, sniffio, distro, google-genai
+  Attempting uninstall: websockets
+    Found existing installation: websockets 17.1
+    Uninstalling websockets-17.1:
+      Successfully uninstalled websockets-17.1
+
+Successfully installed distro-1.9.0 google-genai-2.24.0 sniffio-1.3.1 tenacity-9.1.4 websockets-16.1.1
+
+[notice] A new release of pip is available: 26.0.1 -> 26.2.1
+[notice] To update, run: pip install --upgrade pip

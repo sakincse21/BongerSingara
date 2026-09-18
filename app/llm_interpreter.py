@@ -12,7 +12,8 @@ import json
 import logging
 from typing import Any
 
-import google.generativeai as genai
+import google.genai as genai
+from google.genai import types as genai_types
 
 from app.config import GEMINI_API_KEY, LLM_MAX_RETRIES, LLM_MODEL
 
@@ -145,7 +146,7 @@ def interpret_notes(operator_notes: list[str]) -> list[dict[str, Any]]:
     Returns a list of raw interpretation dicts (not yet guardrail-validated).
     On total failure, returns safe no_op fallbacks for every note.
     """
-    model = _get_model()
+    client = _get_client()
 
     notes_text = "\n".join(f'{i}: "{note}"' for i, note in enumerate(operator_notes))
     user_prompt = USER_PROMPT_TEMPLATE.format(
@@ -156,7 +157,15 @@ def interpret_notes(operator_notes: list[str]) -> list[dict[str, Any]]:
     last_error: Exception | None = None
     for attempt in range(1, LLM_MAX_RETRIES + 2):
         try:
-            response = model.generate_content(user_prompt)
+            response = client.models.generate_content(
+                model=LLM_MODEL,
+                contents=user_prompt,
+                config=genai_types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    response_mime_type="application/json",
+                    temperature=0.1,
+                ),
+            )
             parsed = json.loads(response.text)
 
             # Accept either {"interpretations": [...]} or bare [...]
@@ -181,17 +190,9 @@ def interpret_notes(operator_notes: list[str]) -> list[dict[str, Any]]:
 # ──────────────────────── Private Helpers ────────────────────────────────
 
 
-def _get_model() -> genai.GenerativeModel:
-    """Configure and return a Gemini GenerativeModel instance."""
-    genai.configure(api_key=GEMINI_API_KEY)
-    return genai.GenerativeModel(
-        model_name=LLM_MODEL,
-        generation_config={
-            "response_mime_type": "application/json",
-            "temperature": 0.1,
-        },
-        system_instruction=SYSTEM_PROMPT,
-    )
+def _get_client() -> genai.Client:
+    """Return a configured google.genai Client."""
+    return genai.Client(api_key=GEMINI_API_KEY)
 
 
 def _fallback_interpretations(operator_notes: list[str]) -> list[dict[str, Any]]:

@@ -47,9 +47,13 @@ async def validation_error_handler(
     _request: Request, exc: RequestValidationError
 ) -> JSONResponse:
     """Return 400 for malformed / structurally invalid JSON (Problem Statement §06.1)."""
+    errors = []
+    for err in exc.errors():
+        loc = " -> ".join(str(l) for l in err.get("loc", []))
+        errors.append({"field": loc, "message": err.get("msg", "Invalid value")})
     return JSONResponse(
         status_code=400,
-        content={"detail": f"Invalid request: {exc}"},
+        content={"detail": "Invalid request.", "errors": errors},
     )
 
 
