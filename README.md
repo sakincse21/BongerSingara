@@ -15,6 +15,11 @@ directives using a language model, validates them with deterministic guardrails,
 linear-program optimizer to produce the lowest-cost 24-hour energy schedule that satisfies
 every directive and the underlying GridWise energy rules.
 
+### 🌐 Live Submission Links
+
+- **Live Endpoint Base URL:** `https://bongersingara.onrender.com`
+- **Fallback Docker Image:** `docker pull saleheen103/gridwise-optimizer:latest`
+
 [Quick Start](#-quick-start) · [Architecture](#-architecture) · [API](#-api) · [Docker](#-docker-fallback) · [Testing](#-testing) · [Deployment](#-deployment)
 
 </div>
@@ -133,13 +138,13 @@ A successful response is HTTP 200 with `scenario_id`, `directive_interpretation`
 
 ## 🔑 Environment Variables
 
-| Variable          | Required | Default                  | Description                                                                 |
-| ----------------- | :------: | ------------------------ | --------------------------------------------------------------------------- |
-| `GEMINI_API_KEY`  | ✅       | —                        | Google AI Studio / Vertex API key used to interpret operator notes.         |
-| `LLM_MODEL`       | ❌       | `gemini-3.7-flash`       | Primary Gemini model. The interpreter auto-falls-back to other Flash models on 503/404. |
-| `HOST`            | ❌       | `0.0.0.0`                | Bind address. Use `0.0.0.0` for container deployments.                     |
-| `PORT`            | ❌       | `8000`                   | HTTP port exposed by uvicorn.                                               |
-| `LLM_MAX_RETRIES` | ❌       | `2`                      | Per-model retry count before walking the fallback chain.                    |
+| Variable          | Required | Default            | Description                                                                             |
+| ----------------- | :------: | ------------------ | --------------------------------------------------------------------------------------- |
+| `GEMINI_API_KEY`  |    ✅    | —                  | Google AI Studio / Vertex API key used to interpret operator notes.                     |
+| `LLM_MODEL`       |    ❌    | `gemini-3.7-flash` | Primary Gemini model. The interpreter auto-falls-back to other Flash models on 503/404. |
+| `HOST`            |    ❌    | `0.0.0.0`          | Bind address. Use `0.0.0.0` for container deployments.                                  |
+| `PORT`            |    ❌    | `8000`             | HTTP port exposed by uvicorn.                                                           |
+| `LLM_MAX_RETRIES` |    ❌    | `2`                | Per-model retry count before walking the fallback chain.                                |
 
 ---
 
@@ -221,23 +226,23 @@ curl http://localhost:8000/health
 The main LLM-assisted scheduling endpoint. Accepts one scenario JSON object and returns
 one optimization-plan JSON object.
 
-| Field | Type | Requirement |
-| ----- | ---- | ----------- |
-| `scenario_id` | string | Unique synthetic scenario identifier. |
-| `operator_notes` | array[1..3] of string | Natural-language notes to interpret. |
-| `hours` | array[24] | One entry per hour `0..23` with `demand_kwh`, `solar_kwh`, `tariff_bdt_per_kwh`. |
-| `battery` | object | `capacity_kwh`, `initial_energy_kwh`, `minimum_energy_kwh`, `max_charge_kwh_per_hour`, `max_discharge_kwh_per_hour`. |
+| Field            | Type                  | Requirement                                                                                                          |
+| ---------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `scenario_id`    | string                | Unique synthetic scenario identifier.                                                                                |
+| `operator_notes` | array[1..3] of string | Natural-language notes to interpret.                                                                                 |
+| `hours`          | array[24]             | One entry per hour `0..23` with `demand_kwh`, `solar_kwh`, `tariff_bdt_per_kwh`.                                     |
+| `battery`        | object                | `capacity_kwh`, `initial_energy_kwh`, `minimum_energy_kwh`, `max_charge_kwh_per_hour`, `max_discharge_kwh_per_hour`. |
 
 Response fields: `scenario_id`, `directive_interpretation[]`, `hourly_plan[24]`,
 `total_grid_kwh`, `total_cost_bdt`, `peak_grid_kwh`, `plan_summary`.
 
 ### HTTP status codes
 
-| Code | Meaning |
-| ---- | ------- |
-| 200  | Successful optimization response. |
+| Code | Meaning                                                                       |
+| ---- | ----------------------------------------------------------------------------- |
+| 200  | Successful optimization response.                                             |
 | 400  | Malformed JSON or structurally invalid request (with field-level `errors[]`). |
-| 500  | Controlled internal error. Secrets and stack traces are never exposed. |
+| 500  | Controlled internal error. Secrets and stack traces are never exposed.        |
 
 Interactive Swagger UI is available at **`/docs`** when the service is running locally.
 
@@ -256,30 +261,65 @@ Interactive Swagger UI is available at **`/docs`** when the service is running l
     "The cafeteria menu changes tomorrow."
   ],
   "hours": [
-    {"hour": 0,  "demand_kwh": 180, "solar_kwh": 0,   "tariff_bdt_per_kwh": 7},
-    {"hour": 1,  "demand_kwh": 170, "solar_kwh": 0,   "tariff_bdt_per_kwh": 7},
-    {"hour": 2,  "demand_kwh": 160, "solar_kwh": 0,   "tariff_bdt_per_kwh": 6},
-    {"hour": 3,  "demand_kwh": 155, "solar_kwh": 0,   "tariff_bdt_per_kwh": 6},
-    {"hour": 4,  "demand_kwh": 160, "solar_kwh": 0,   "tariff_bdt_per_kwh": 6},
-    {"hour": 5,  "demand_kwh": 170, "solar_kwh": 10,  "tariff_bdt_per_kwh": 7},
-    {"hour": 6,  "demand_kwh": 200, "solar_kwh": 40,  "tariff_bdt_per_kwh": 8},
-    {"hour": 7,  "demand_kwh": 220, "solar_kwh": 70,  "tariff_bdt_per_kwh": 8},
-    {"hour": 8,  "demand_kwh": 250, "solar_kwh": 100, "tariff_bdt_per_kwh": 9},
-    {"hour": 9,  "demand_kwh": 260, "solar_kwh": 120, "tariff_bdt_per_kwh": 9},
-    {"hour": 10, "demand_kwh": 270, "solar_kwh": 140, "tariff_bdt_per_kwh": 10},
-    {"hour": 11, "demand_kwh": 280, "solar_kwh": 150, "tariff_bdt_per_kwh": 10},
-    {"hour": 12, "demand_kwh": 290, "solar_kwh": 145, "tariff_bdt_per_kwh": 10},
-    {"hour": 13, "demand_kwh": 270, "solar_kwh": 130, "tariff_bdt_per_kwh": 9},
-    {"hour": 14, "demand_kwh": 260, "solar_kwh": 110, "tariff_bdt_per_kwh": 9},
-    {"hour": 15, "demand_kwh": 250, "solar_kwh": 80,  "tariff_bdt_per_kwh": 9},
-    {"hour": 16, "demand_kwh": 240, "solar_kwh": 50,  "tariff_bdt_per_kwh": 10},
-    {"hour": 17, "demand_kwh": 260, "solar_kwh": 20,  "tariff_bdt_per_kwh": 12},
-    {"hour": 18, "demand_kwh": 280, "solar_kwh": 5,   "tariff_bdt_per_kwh": 12},
-    {"hour": 19, "demand_kwh": 270, "solar_kwh": 0,   "tariff_bdt_per_kwh": 12},
-    {"hour": 20, "demand_kwh": 250, "solar_kwh": 0,   "tariff_bdt_per_kwh": 11},
-    {"hour": 21, "demand_kwh": 230, "solar_kwh": 0,   "tariff_bdt_per_kwh": 10},
-    {"hour": 22, "demand_kwh": 210, "solar_kwh": 0,   "tariff_bdt_per_kwh": 8},
-    {"hour": 23, "demand_kwh": 200, "solar_kwh": 0,   "tariff_bdt_per_kwh": 9}
+    { "hour": 0, "demand_kwh": 180, "solar_kwh": 0, "tariff_bdt_per_kwh": 7 },
+    { "hour": 1, "demand_kwh": 170, "solar_kwh": 0, "tariff_bdt_per_kwh": 7 },
+    { "hour": 2, "demand_kwh": 160, "solar_kwh": 0, "tariff_bdt_per_kwh": 6 },
+    { "hour": 3, "demand_kwh": 155, "solar_kwh": 0, "tariff_bdt_per_kwh": 6 },
+    { "hour": 4, "demand_kwh": 160, "solar_kwh": 0, "tariff_bdt_per_kwh": 6 },
+    { "hour": 5, "demand_kwh": 170, "solar_kwh": 10, "tariff_bdt_per_kwh": 7 },
+    { "hour": 6, "demand_kwh": 200, "solar_kwh": 40, "tariff_bdt_per_kwh": 8 },
+    { "hour": 7, "demand_kwh": 220, "solar_kwh": 70, "tariff_bdt_per_kwh": 8 },
+    { "hour": 8, "demand_kwh": 250, "solar_kwh": 100, "tariff_bdt_per_kwh": 9 },
+    { "hour": 9, "demand_kwh": 260, "solar_kwh": 120, "tariff_bdt_per_kwh": 9 },
+    {
+      "hour": 10,
+      "demand_kwh": 270,
+      "solar_kwh": 140,
+      "tariff_bdt_per_kwh": 10
+    },
+    {
+      "hour": 11,
+      "demand_kwh": 280,
+      "solar_kwh": 150,
+      "tariff_bdt_per_kwh": 10
+    },
+    {
+      "hour": 12,
+      "demand_kwh": 290,
+      "solar_kwh": 145,
+      "tariff_bdt_per_kwh": 10
+    },
+    {
+      "hour": 13,
+      "demand_kwh": 270,
+      "solar_kwh": 130,
+      "tariff_bdt_per_kwh": 9
+    },
+    {
+      "hour": 14,
+      "demand_kwh": 260,
+      "solar_kwh": 110,
+      "tariff_bdt_per_kwh": 9
+    },
+    { "hour": 15, "demand_kwh": 250, "solar_kwh": 80, "tariff_bdt_per_kwh": 9 },
+    {
+      "hour": 16,
+      "demand_kwh": 240,
+      "solar_kwh": 50,
+      "tariff_bdt_per_kwh": 10
+    },
+    {
+      "hour": 17,
+      "demand_kwh": 260,
+      "solar_kwh": 20,
+      "tariff_bdt_per_kwh": 12
+    },
+    { "hour": 18, "demand_kwh": 280, "solar_kwh": 5, "tariff_bdt_per_kwh": 12 },
+    { "hour": 19, "demand_kwh": 270, "solar_kwh": 0, "tariff_bdt_per_kwh": 12 },
+    { "hour": 20, "demand_kwh": 250, "solar_kwh": 0, "tariff_bdt_per_kwh": 11 },
+    { "hour": 21, "demand_kwh": 230, "solar_kwh": 0, "tariff_bdt_per_kwh": 10 },
+    { "hour": 22, "demand_kwh": 210, "solar_kwh": 0, "tariff_bdt_per_kwh": 8 },
+    { "hour": 23, "demand_kwh": 200, "solar_kwh": 0, "tariff_bdt_per_kwh": 9 }
   ],
   "battery": {
     "capacity_kwh": 500,
@@ -297,17 +337,31 @@ Interactive Swagger UI is available at **`/docs`** when the service is running l
 {
   "scenario_id": "TEST-001",
   "directive_interpretation": [
-    {"note_index": 0, "applies": true,  "directive_type": "solar_reduction",
-     "structured_adjustment": {"hours": [13, 14], "factor": 0.2},
-     "explanation": "Solar availability reduced to 20% during hours 13-14."},
-    {"note_index": 1, "applies": true,  "directive_type": "no_charge_window",
-     "structured_adjustment": {"hours": [14, 15]},
-     "explanation": "Battery charging prohibited during hours 14-15."},
-    {"note_index": 2, "applies": false, "directive_type": "no_op",
-     "structured_adjustment": null,
-     "explanation": "Cafeteria menu is irrelevant to energy operations."}
+    {
+      "note_index": 0,
+      "applies": true,
+      "directive_type": "solar_reduction",
+      "structured_adjustment": { "hours": [13, 14], "factor": 0.2 },
+      "explanation": "Solar availability reduced to 20% during hours 13-14."
+    },
+    {
+      "note_index": 1,
+      "applies": true,
+      "directive_type": "no_charge_window",
+      "structured_adjustment": { "hours": [14, 15] },
+      "explanation": "Battery charging prohibited during hours 14-15."
+    },
+    {
+      "note_index": 2,
+      "applies": false,
+      "directive_type": "no_op",
+      "structured_adjustment": null,
+      "explanation": "Cafeteria menu is irrelevant to energy operations."
+    }
   ],
-  "hourly_plan": [ /* 24 entries, one per hour 0..23 */ ],
+  "hourly_plan": [
+    /* 24 entries, one per hour 0..23 */
+  ],
   "total_grid_kwh": 4507,
   "total_cost_bdt": 39028,
   "peak_grid_kwh": 344,
@@ -330,12 +384,12 @@ The language model is **mandatory** and sits at the head of the interpretation p
 - **Input:** 1–3 free-text operator notes.
 - **Output:** One `directive_interpretation` entry per note, each classifying into exactly
   one of:
-  - `solar_reduction`         — `{"hours": [...], "factor": float}`
+  - `solar_reduction` — `{"hours": [...], "factor": float}`
   - `minimum_battery_reserve` — `{"hours": [...], "minimum_energy_kwh": float}`
-  - `no_charge_window`        — `{"hours": [...]}`
-  - `no_discharge_window`     — `{"hours": [...]}`
-  - `max_grid_window`         — `{"hours": [...], "max_grid_kwh": float}`
-  - `no_op`                   — `null` (with `applies: false`)
+  - `no_charge_window` — `{"hours": [...]}`
+  - `no_discharge_window` — `{"hours": [...]}`
+  - `max_grid_window` — `{"hours": [...], "max_grid_kwh": float}`
+  - `no_op` — `null` (with `applies: false`)
 - **Robustness:** The system prompt contains 8 worked examples covering every supported
   type and the `1 PM to 3 PM → [13, 14]` whole-hour convention. Hidden paraphrases of the
   same underlying rule resolve to the same directive type.
@@ -347,14 +401,14 @@ The LLM never touches the optimizer directly; its structured output is validated
 
 ## 📐 Optimizer / Solver
 
-| Component | Choice |
-| --------- | ------ |
-| Solver    | [PuLP](https://coin-or.github.io/pulp/) with bundled COIN-OR **CBC** |
-| Variables | ~120 (24 hours × grid/solar/charge/discharge) |
-| Constraints | ~75 (energy balance, battery bounds, rate limits, directive bounds) |
-| Solve time | under 10 ms per scenario on a single CPU |
-| Objective  | Minimise `Σ grid[h] × tariff[h]` for `h ∈ 0..23` |
-| End-of-day constraint | Battery must return to `initial_energy_kwh` |
+| Component             | Choice                                                               |
+| --------------------- | -------------------------------------------------------------------- |
+| Solver                | [PuLP](https://coin-or.github.io/pulp/) with bundled COIN-OR **CBC** |
+| Variables             | ~120 (24 hours × grid/solar/charge/discharge)                        |
+| Constraints           | ~75 (energy balance, battery bounds, rate limits, directive bounds)  |
+| Solve time            | under 10 ms per scenario on a single CPU                             |
+| Objective             | Minimise `Σ grid[h] × tariff[h]` for `h ∈ 0..23`                     |
+| End-of-day constraint | Battery must return to `initial_energy_kwh`                          |
 
 The LP formulation treats `charge` and `discharge` as disjoint binary choices per hour;
 the optimizer returns the lowest-cost plan that satisfies every applicable directive and
@@ -420,12 +474,12 @@ container orchestrator (Render, Fly, Railway, ECS) will mark the instance ready 
 This service can be deployed on any reachable platform that runs Docker or Python 3.11+.
 The minimum required environment is:
 
-| Setting | Value |
-| ------- | ----- |
-| Runtime | Docker (recommended) **or** Python 3.11+ with `uvicorn` |
-| Exposed port | `8000` (TCP) |
-| Bind address | `0.0.0.0` |
-| Health check path | `/health` (must return 200 within 60 s of start) |
+| Setting               | Value                                                                           |
+| --------------------- | ------------------------------------------------------------------------------- |
+| Runtime               | Docker (recommended) **or** Python 3.11+ with `uvicorn`                         |
+| Exposed port          | `8000` (TCP)                                                                    |
+| Bind address          | `0.0.0.0`                                                                       |
+| Health check path     | `/health` (must return 200 within 60 s of start)                                |
 | Environment variables | `GEMINI_API_KEY` (required), `LLM_MODEL` (optional, default `gemini-3.7-flash`) |
 
 ### Render.com (one-paragraph walkthrough)
@@ -452,16 +506,16 @@ docker run -d -p 8000:8000 \
 
 ## 📦 Dependencies
 
-| Package               | Version    | Purpose                                       |
-| --------------------- | ---------- | --------------------------------------------- |
-| `fastapi`             | ≥ 0.100.0  | HTTP API framework + automatic Swagger UI     |
-| `uvicorn[standard]`   | ≥ 0.25.0   | ASGI server with HTTP/1.1 + WebSocket support |
-| `pydantic`            | ≥ 2.0.0    | Strict request/response schema validation     |
-| `google-genai`        | ≥ 1.0.0    | Gemini LLM API client                         |
-| `PuLP`                | ≥ 2.7.0    | Linear-programming formulation + CBC solver   |
-| `python-dotenv`       | ≥ 1.0.0    | `.env` file loading                           |
-| `httpx`               | ≥ 0.25.0   | HTTP client used by FastAPI TestClient        |
-| `pytest`              | ≥ 8.0.0    | Test framework                                |
+| Package             | Version   | Purpose                                       |
+| ------------------- | --------- | --------------------------------------------- |
+| `fastapi`           | ≥ 0.100.0 | HTTP API framework + automatic Swagger UI     |
+| `uvicorn[standard]` | ≥ 0.25.0  | ASGI server with HTTP/1.1 + WebSocket support |
+| `pydantic`          | ≥ 2.0.0   | Strict request/response schema validation     |
+| `google-genai`      | ≥ 1.0.0   | Gemini LLM API client                         |
+| `PuLP`              | ≥ 2.7.0   | Linear-programming formulation + CBC solver   |
+| `python-dotenv`     | ≥ 1.0.0   | `.env` file loading                           |
+| `httpx`             | ≥ 0.25.0  | HTTP client used by FastAPI TestClient        |
+| `pytest`            | ≥ 8.0.0   | Test framework                                |
 
 Install everything with `pip install -r requirements.txt`.
 
