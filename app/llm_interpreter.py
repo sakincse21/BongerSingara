@@ -19,6 +19,17 @@ from app.config import GEMINI_API_KEY, LLM_MAX_RETRIES, LLM_MODEL
 
 logger = logging.getLogger(__name__)
 
+# Fallback chain used when the configured model is unavailable (404 retired,
+# 503 overloaded, transient network error). Ordered by: cheap/fast first.
+_MODEL_FALLBACKS: tuple[str, ...] = (
+    "gemini-flash-lite-latest",
+    "gemini-flash-latest",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+)
+
 # ─────────────────────────── System Prompt ──────────────────────────────
 
 SYSTEM_PROMPT = """\
@@ -154,36 +165,60 @@ def interpret_notes(operator_notes: list[str]) -> list[dict[str, Any]]:
         notes=notes_text,
     )
 
+    # Build ordered list of models to try: configured first, then fallbacks
+    # (deduped, case-preserved in original order).
+    seen: set[str] = set()
+    model_chain: list[str] = []
+    for m in [LLM_MODEL, *_MODEL_FALLBACKS]:
+        if m and m not in seen:
+            seen.add(m)
+            model_chain.append(m)
+
     last_error: Exception | None = None
-    for attempt in range(1, LLM_MAX_RETRIES + 2):
-        try:
-            response = client.models.generate_content(
-                model=LLM_MODEL,
-                contents=user_prompt,
-                config=genai_types.GenerateContentConfig(
-                    system_instruction=SYSTEM_PROMPT,
-                    response_mime_type="application/json",
-                    temperature=0.1,
-                ),
-            )
-            parsed = json.loads(response.text)
+    for model_name in model_chain:
+        for attempt in range(1, LLM_MAX_RETRIES + 2):
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=user_prompt,
+                    config=genai_types.GenerateContentConfig(
+                        system_instruction=SYSTEM_PROMPT,
+                        response_mime_type="application/json",
+                        temperature=0.1,
+                    ),
+                )
+                parsed = json.loads(response.text)
 
-            # Accept either {"interpretations": [...]} or bare [...]
-            if isinstance(parsed, dict) and "interpretations" in parsed:
-                return parsed["interpretations"]
-            if isinstance(parsed, list):
-                return parsed
+                # Accept either {"interpretations": [...]} or bare [...]
+                if isinstance(parsed, dict) and "interpretations" in parsed:
+                    return parsed["interpretations"]
+                if isinstance(parsed, list):
+                    return parsed
 
-            logger.warning("LLM returned unexpected shape on attempt %d: %s", attempt, type(parsed))
+                logger.warning(
+                    "LLM %s returned unexpected shape on attempt %d: %s",
+                    model_name, attempt, type(parsed),
+                )
 
-        except json.JSONDecodeError as exc:
-            last_error = exc
-            logger.warning("LLM JSON decode error on attempt %d: %s", attempt, exc)
-        except Exception as exc:  # noqa: BLE001
-            last_error = exc
-            logger.warning("LLM call failed on attempt %d: %s", attempt, exc)
+            except json.JSONDecodeError as exc:
+                last_error = exc
+                logger.warning(
+                    "LLM %s JSON decode error on attempt %d: %s",
+                    model_name, attempt, exc,
+                )
+            except Exception as exc:  # noqa: BLE001
+                last_error = exc
+                logger.warning(
+                    "LLM %s call failed on attempt %d: %s",
+                    model_name, attempt, str(exc).splitlines()[0][:200],
+                )
+                # Don't keep retrying the same broken model — try the next one.
+                break
 
-    logger.error("All %d LLM attempts exhausted. Last error: %s", LLM_MAX_RETRIES + 1, last_error)
+    logger.error(
+        "All %d model(s) exhausted. Last error: %s",
+        len(model_chain), last_error,
+    )
     return _fallback_interpretations(operator_notes)
 
 

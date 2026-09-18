@@ -5,7 +5,7 @@ Required env vars:
   GEMINI_API_KEY  – Google AI Studio / Vertex API key.
 
 Optional env vars:
-  LLM_MODEL       – Model name (default: gemini-2.0-flash).
+  LLM_MODEL       – Model name (default: gemini-3.7-flash).
   HOST             – Bind address (default: 0.0.0.0).
   PORT             – Bind port (default: 8000).
   LLM_MAX_RETRIES  – How many times to retry a failed LLM call (default: 2).
